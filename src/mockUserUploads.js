@@ -1,0 +1,74 @@
+export const mockUserUploads = [
+  {
+    id: 'upl_001',
+    filename: 'spring-sizing-chart.png',
+    mimeType: 'image/png',
+    fileType: 'Image',
+    sizeBytes: 842318,
+    uploadedAt: '2026-06-04T14:30:00Z',
+    lastUsedAt: '2026-06-16T19:12:00Z',
+    usageCount: 18,
+    color: '#7c3aed',
+    source: 'recent'
+  },
+  {
+    id: 'upl_002',
+    filename: 'wholesale-pricing-sheet.pdf',
+    mimeType: 'application/pdf',
+    fileType: 'PDF',
+    sizeBytes: 1542318,
+    uploadedAt: '2026-05-28T10:16:00Z',
+    lastUsedAt: '2026-06-15T12:44:00Z',
+    usageCount: 11,
+    color: '#ef4444',
+    source: 'recent'
+  },
+  {
+    id: 'upl_003',
+    filename: 'linen-color-swatches.jpg',
+    mimeType: 'image/jpeg',
+    fileType: 'Image',
+    sizeBytes: 633910,
+    uploadedAt: '2026-06-01T09:20:00Z',
+    lastUsedAt: '2026-06-14T16:03:00Z',
+    usageCount: 9,
+    color: '#f97316',
+    source: 'recent'
+  },
+  {
+    id: 'upl_004',
+    filename: 'product-care-instructions.docx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    fileType: 'Document',
+    sizeBytes: 289214,
+    uploadedAt: '2026-05-18T17:42:00Z',
+    lastUsedAt: '2026-06-12T20:18:00Z',
+    usageCount: 7,
+    color: '#2563eb',
+    source: 'recent'
+  },
+  {
+    id: 'upl_005',
+    filename: 'retail-return-policy.pdf',
+    mimeType: 'application/pdf',
+    fileType: 'PDF',
+    sizeBytes: 418552,
+    uploadedAt: '2026-05-12T11:05:00Z',
+    lastUsedAt: '2026-06-10T09:08:00Z',
+    usageCount: 5,
+    color: '#0891b2',
+    source: 'recent'
+  },
+  {
+    id: 'upl_006',
+    filename: 'delivery-window-reference.xlsx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    fileType: 'Spreadsheet',
+    sizeBytes: 731204,
+    uploadedAt: '2026-04-30T15:02:00Z',
+    lastUsedAt: '2026-06-08T13:27:00Z',
+    usageCount: 4,
+    color: '#16a34a',
+    source: 'recent'
+  }
+]
