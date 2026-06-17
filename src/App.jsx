@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
+  MAX_FILE_SIZE_BYTES,
   formatBytes,
+  getFileColor,
   formatRelativeDate,
   isDuplicateAttachment,
   makeLocalUpload,
@@ -49,7 +51,7 @@ function Icon({ name }) {
 
 function UploadBadge({ upload }) {
   return (
-    <span className="file-badge" style={{ '--badge-color': upload.color }}>
+    <span className="file-badge" style={{ '--badge-color': getFileColor(upload.fileType) }}>
       {upload.fileType.slice(0, 3).toUpperCase()}
     </span>
   )
@@ -65,6 +67,11 @@ function SentAttachmentCard({ attachment }) {
       </span>
     </div>
   )
+}
+
+function attachmentSummary(attachments) {
+  const totalBytes = attachments.reduce((total, attachment) => total + attachment.sizeBytes, 0)
+  return `${attachments.length} file${attachments.length === 1 ? '' : 's'} ready · ${formatBytes(totalBytes)} total`
 }
 
 function HellotextLogo() {
@@ -91,7 +98,15 @@ export default function App() {
   const [emptyMode, setEmptyMode] = useState(false)
   const [sentMessages, setSentMessages] = useState([
     {
+      id: 'msg_seed_000',
+      direction: 'inbound',
+      body: 'Can you send the sizing chart again? I also need the wholesale price sheet.',
+      attachments: [],
+      sentAt: '2026-06-17T11:58:00Z'
+    },
+    {
       id: 'msg_seed_001',
+      direction: 'outbound',
       body: 'Yes, I can send both right here.',
       attachments: [],
       sentAt: '2026-06-17T12:00:00Z'
@@ -185,6 +200,7 @@ export default function App() {
       ...current,
       {
         id: `msg_${Date.now()}`,
+        direction: 'outbound',
         body,
         attachments: sentAttachments,
         sentAt: new Date().toISOString()
@@ -205,7 +221,15 @@ export default function App() {
     setSelectedIds([])
     setSentMessages([
       {
+        id: 'msg_seed_000',
+        direction: 'inbound',
+        body: 'Can you send the sizing chart again? I also need the wholesale price sheet.',
+        attachments: [],
+        sentAt: '2026-06-17T11:58:00Z'
+      },
+      {
         id: 'msg_seed_001',
+        direction: 'outbound',
         body: 'Yes, I can send both right here.',
         attachments: [],
         sentAt: '2026-06-17T12:00:00Z'
@@ -221,39 +245,25 @@ export default function App() {
 
   return (
     <main className="app-shell">
-      <section className="hero-card" aria-labelledby="prototype-title">
+      <header className="top-bar" aria-label="Prototype header">
         <div className="brand-row">
           <HellotextLogo />
-          <span>Recent attachments prototype</span>
+          <span className="prototype-label">Recent Attachments Prototype</span>
         </div>
+        <span className="demo-note">Client-only demo</span>
+      </header>
+
+      <section className="hero-card" aria-labelledby="prototype-title">
         <div className="hero-copy">
-          <p className="eyebrow">Reusable attachments for faster replies</p>
-          <h1 id="prototype-title">Attach once. Reuse from recent files forever.</h1>
+          <h1 id="prototype-title">Recent attachments</h1>
           <p>
-            A client-side demo of a chat composer that treats previously uploaded files as reusable
-            `UserUpload` records, so teams can resend sizing charts, pricing sheets, and product assets
-            without hunting through folders every time.
+            Reuse uploaded files directly from the composer. This demo keeps attachment metadata in localStorage,
+            shaped like a future UserUpload API response.
           </p>
         </div>
       </section>
 
       <section className="demo-grid" aria-label="Interactive chat demo">
-        <aside className="insight-panel">
-          <p className="eyebrow">What this simulates</p>
-          <h2>Client-only storage for a backend-shaped workflow</h2>
-          <div className="model-card">
-            <span>UserUpload</span>
-            <code>id, filename, mimeType, sizeBytes, lastUsedAt, usageCount</code>
-          </div>
-          <ul>
-            <li>Static JSON acts as seeded database records.</li>
-            <li>localStorage persists demo uploads and draft chips.</li>
-            <li>Validation blocks unsupported and oversized files.</li>
-            <li>Duplicate attachments are disabled and announced.</li>
-          </ul>
-          <button className="ghost-button" type="button" onClick={resetDemo}>Reset demo storage</button>
-        </aside>
-
         <section className="phone-frame" aria-label="Hellotext chat composer">
           <div className="chat-header">
             <div>
@@ -264,9 +274,8 @@ export default function App() {
           </div>
 
           <div className="message-stack" aria-label="Conversation preview">
-            <div className="bubble inbound">Do you have the sizing chart and wholesale price sheet?</div>
             {sentMessages.map((sentMessage) => (
-              <div className="bubble outbound" key={sentMessage.id}>
+              <div className={`bubble ${sentMessage.direction}`} key={sentMessage.id}>
                 {sentMessage.body && <p>{sentMessage.body}</p>}
                 {sentMessage.attachments.length > 0 && (
                   <div className="sent-attachments" aria-label={`Attachments sent with ${sentMessage.id}`}>
@@ -275,7 +284,7 @@ export default function App() {
                     ))}
                   </div>
                 )}
-                <time dateTime={sentMessage.sentAt}>Sent just now</time>
+                {sentMessage.direction === 'outbound' && <time dateTime={sentMessage.sentAt}>Sent just now</time>}
               </div>
             ))}
           </div>
@@ -289,6 +298,10 @@ export default function App() {
               rows={4}
               placeholder="Write a reply..."
             />
+
+            {attachments.length > 0 && (
+              <div className="draft-summary" aria-live="polite">{attachmentSummary(attachments)}</div>
+            )}
 
             {attachments.length > 0 && (
               <div className="attachment-tray" aria-label="Draft attachments">
@@ -312,35 +325,38 @@ export default function App() {
             )}
 
             <div className="composer-actions">
-              <div className="attachment-menu-wrap">
-                <button
-                  className="icon-button"
-                  type="button"
-                  aria-label="Attach file"
-                  aria-expanded={menuOpen}
-                  onClick={() => setMenuOpen((open) => !open)}
-                >
-                  <Icon name="paperclip" />
-                </button>
+              <div className="attachment-actions">
+                <div className="attachment-menu-wrap">
+                  <button
+                    className="icon-button"
+                    type="button"
+                    aria-label="Attach file"
+                    aria-expanded={menuOpen}
+                    onClick={() => setMenuOpen((open) => !open)}
+                  >
+                    <Icon name="paperclip" />
+                  </button>
 
-                {menuOpen && (
-                  <div className="attach-menu" role="menu">
-                    <button type="button" role="menuitem" onClick={() => fileInputRef.current?.click()}>
-                      <Icon name="upload" />
-                      <span>
-                        <strong>Upload from device</strong>
-                        <small>Validate and add to this draft</small>
-                      </span>
-                    </button>
-                    <button type="button" role="menuitem" onClick={openRecentPicker}>
-                      <Icon name="library" />
-                      <span>
-                        <strong>Choose recent</strong>
-                        <small>Reuse saved UserUpload records</small>
-                      </span>
-                    </button>
-                  </div>
-                )}
+                  {menuOpen && (
+                    <div className="attach-menu" role="menu">
+                      <button type="button" role="menuitem" onClick={() => fileInputRef.current?.click()}>
+                        <Icon name="upload" />
+                        <span>
+                          <strong>Upload from device</strong>
+                          <small>Validate and add to this draft</small>
+                        </span>
+                      </button>
+                      <button type="button" role="menuitem" onClick={openRecentPicker}>
+                        <Icon name="library" />
+                        <span>
+                          <strong>Choose recent</strong>
+                          <small>Reuse saved UserUpload records</small>
+                        </span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+
               </div>
 
               <input
@@ -361,6 +377,27 @@ export default function App() {
 
           <div className="notice" role="status" aria-live="polite">{notice || 'Ready to attach a new file or reuse a recent one.'}</div>
         </section>
+
+        <aside className="insight-panel">
+          <p className="eyebrow">Backend-shaped model</p>
+          <h2>Implementation notes</h2>
+          <div className="model-card">
+            <span>UserUpload</span>
+            <code>id · filename · mimeType · sizeBytes · lastUsedAt</code>
+          </div>
+          <ul>
+            <li>UserUpload stores file metadata and reuse stats.</li>
+            <li>S3-compatible storage would hold file bytes.</li>
+            <li>MessageAttachment links sent files to messages.</li>
+            <li>This demo uses localStorage and mock JSON only.</li>
+          </ul>
+          <div className="rules-card">
+            <strong>Demo rules</strong>
+            <span>Allowed: PNG, JPG, WebP, PDF, DOCX, XLSX, TXT</span>
+            <span>Max size: {formatBytes(MAX_FILE_SIZE_BYTES)}</span>
+          </div>
+          <button className="ghost-button" type="button" onClick={resetDemo}>Reset demo storage</button>
+        </aside>
       </section>
 
       {pickerOpen && (
@@ -426,7 +463,7 @@ export default function App() {
                         <small>{upload.fileType} · {formatBytes(upload.sizeBytes)}</small>
                         <small>Last used {formatRelativeDate(upload.lastUsedAt)} · {upload.usageCount} sends</small>
                       </span>
-                      <span className="selection-pill">{attached ? 'Attached' : selected ? 'Selected' : 'Available'}</span>
+                      <span className="selection-pill">{attached ? 'Attached' : selected ? 'Selected for this message' : 'Available'}</span>
                     </button>
                   )
                 })}
